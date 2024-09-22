@@ -40,3 +40,4 @@ tqdm==4.66.4
 typing-extensions==4.12.1
 urllib3==2.2.1
 wcwidth==0.2.13
+rubicon-objc==0.4.9

@@ -7,6 +7,15 @@ from core.ui.base import ProjectStage, UIBase, UIClosedError, UISource, UserInpu
 
 log = get_logger(__name__)
 
+try:
+    from rubicon.objc import ObjCClass
+    NSUserNotification = ObjCClass("NSUserNotification")
+    NSUserNotificationCenter = ObjCClass("NSUserNotificationCenter")
+    NOTIFICATIONS_AVAILABLE = True
+except ImportError:
+    log.warning("rubicon.objc not found, macOS notifications disabled")
+    NOTIFICATIONS_AVAILABLE = False
+
 
 class PlainConsoleUI(UIBase):
     """
@@ -53,6 +62,13 @@ class PlainConsoleUI(UIBase):
     ):
         pass
 
+    async def send_notification(self, title: str, message: str):
+        if NOTIFICATIONS_AVAILABLE:
+            notification = NSUserNotification.alloc().init()
+            notification.title = title
+            notification.informativeText = message
+            NSUserNotificationCenter.defaultUserNotificationCenter.deliverNotification_(notification)
+
     async def ask_question(
         self,
         question: str,
@@ -65,6 +81,9 @@ class PlainConsoleUI(UIBase):
         initial_text: Optional[str] = None,
         source: Optional[UISource] = None,
     ) -> UserInput:
+        # Send notification
+        await self.send_notification("GPT Pilot Input Required", question)
+
         if source:
             print(f"[{source}] {question}")
         else:
